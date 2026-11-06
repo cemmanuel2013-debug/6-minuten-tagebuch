@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>6-Minuten-Tagebuch</title>
+<meta name="description" content="Dein 6-Minuten-Tagebuch: morgens, abends und jede Woche.">
+<meta name="theme-color" content="#F7F3EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1A1917" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Tagebuch">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<style>
+:root{
+  --bg:#F7F3EC; --card:#FFFDF9; --ink:#2A2724; --muted:#8A8177; --line:#E5DDD0;
+  --accent:#B4613F; --accent-ink:#FFFFFF; --accent-soft:#F4E5DC; --rec:#C2410C;
+  --serif: ui-serif, "New York", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1A1917; --card:#24221F; --ink:#ECE6DC; --muted:#9C9388; --line:#38342F;
+    --accent:#DB8A68; --accent-ink:#1A1917; --accent-soft:#3B2A22; --rec:#F97316;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-text-size-adjust:100%}
+body{min-height:100vh;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+svg{display:block}
+
+/* Kopfzeile */
+.top{position:sticky;top:0;z-index:10;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 8px 10px;border-bottom:1px solid transparent;transition:border-color .2s}
+.top.scrolled{border-bottom-color:var(--line)}
+.nav{max-width:600px;margin:0 auto;display:flex;align-items:center;gap:4px}
+.nav .mid{flex:1;text-align:center;min-width:0}
+.nav h1{margin:0;font:600 19px/1.25 var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav .sub{font-size:13px;color:var(--muted);margin-top:2px;min-height:16px}
+.nav .sub button{color:var(--accent);font-weight:600;font-size:13px}
+.icon-btn{width:44px;height:44px;border-radius:22px;display:grid;place-items:center;color:var(--muted);flex:none}
+.icon-btn:active{background:var(--accent-soft)}
+
+main{max-width:600px;margin:0 auto;padding:4px 16px 24px}
+
+/* Karten und Abschnitte */
+.quote{margin:10px 0 18px;padding:18px 20px;border-radius:16px;background:var(--accent-soft)}
+.quote p{margin:0;font:italic 400 17px/1.5 var(--serif)}
+.quote cite{display:block;margin-top:8px;font-style:normal;font-size:13px;color:var(--muted)}
+.banner{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin:0 0 18px;padding:14px 16px;border-radius:14px;border:1px solid var(--accent);color:var(--ink)}
+.banner b{color:var(--accent)}
+.banner span{flex:1;font-size:15px;line-height:1.4}
+
+.part{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px 8px;margin-bottom:16px}
+.part-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.part-head svg{color:var(--accent)}
+.part-head h2{flex:1;margin:0;font:600 21px/1.2 var(--serif)}
+.count{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.count.full{color:var(--accent);font-weight:600}
+.part-note{margin:2px 0 6px;font-size:14px;color:var(--muted);line-height:1.4}
+
+.q{padding:12px 0 10px}
+.q + .q{border-top:1px dashed var(--line)}
+.q h3{margin:0 0 4px;font:600 15px/1.35 var(--sans)}
+.q .hint{margin:0 0 4px;font-size:13px;color:var(--muted)}
+.row{display:flex;align-items:flex-start;gap:6px}
+.num{flex:none;width:18px;padding-top:11px;font:600 15px/1 var(--serif);color:var(--muted)}
+textarea{flex:1;min-width:0;display:block;width:100%;resize:none;overflow:hidden;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink);font:17px/1.45 var(--sans);padding:8px 0 7px;margin:0;outline:none;-webkit-appearance:none}
+textarea:focus{border-bottom-color:var(--accent)}
+textarea::placeholder{color:var(--muted);opacity:.65}
+textarea.tall{min-height:120px}
+.mic{flex:none;width:40px;height:40px;border-radius:20px;display:grid;place-items:center;color:var(--muted);margin-top:1px}
+.mic:active{background:var(--accent-soft)}
+.mic.rec{background:var(--rec);color:#fff;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(194,65,12,.45)}50%{box-shadow:0 0 0 8px rgba(194,65,12,0)}}
+
+/* Glücksskala */
+.scale{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin:8px 0 6px}
+.scale button{height:38px;border-radius:10px;border:1px solid var(--line);font-weight:600;font-size:15px;font-variant-numeric:tabular-nums}
+.scale button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.scale-legend{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px}
+
+/* Gewohnheiten */
+.habit{padding:12px 0 12px}
+.habit + .habit{border-top:1px dashed var(--line)}
+.habit input{width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font:600 16px/1.4 var(--sans);padding:6px 0;outline:none;border-radius:0;-webkit-appearance:none}
+.habit input:focus{border-bottom-color:var(--accent)}
+.habit input::placeholder{color:var(--muted);font-weight:400;opacity:.7}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}
+.day{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
+.day.today{color:var(--accent);font-weight:700}
+.check{width:38px;height:38px;border-radius:19px;border:1.5px solid var(--line);display:grid;place-items:center;color:transparent;transition:background .15s,border-color .15s}
+.check.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.day.today .check:not(.on){border-color:var(--accent)}
+.quick{display:flex;align-items:center;gap:12px;padding:10px 0;width:100%;text-align:left}
+.quick + .quick{border-top:1px dashed var(--line)}
+.quick span{flex:1;font-size:16px}
+
+.plan{margin:6px 0 16px;padding:14px 18px;border-radius:16px;border:1px solid var(--line);background:var(--card)}
+.plan h2{margin:0 0 8px;font:600 17px/1.3 var(--serif)}
+.plan dl{margin:0}
+.plan dt{font-size:13px;color:var(--muted);margin-top:8px}
+.plan dd{margin:2px 0 0;font-size:15px;line-height:1.45;white-space:pre-wrap}
+
+/* Verlauf */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0 18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.stat b{display:block;font:600 28px/1.1 var(--serif);color:var(--accent);font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+.hweek{margin-bottom:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.hweek-head{display:flex;justify-content:space-between;align-items:center;width:100%;padding:12px 16px;text-align:left;border-bottom:1px solid var(--line)}
+.hweek-head strong{font:600 16px/1.3 var(--serif)}
+.tag{font-size:12px;color:var(--accent);font-weight:600}
+.hday{display:flex;gap:12px;width:100%;padding:11px 16px;text-align:left;align-items:baseline}
+.hday + .hday{border-top:1px solid var(--line)}
+.hday .d{flex:none;width:58px;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.hday .t{flex:1;min-width:0;font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{color:var(--muted);text-align:center;padding:30px 10px;line-height:1.5}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 18px;border-radius:12px;border:1px solid var(--line);font-weight:600;font-size:15px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 6px}
+.small{font-size:14px;color:var(--muted);line-height:1.5;margin:6px 0}
+
+/* Tab-Leiste */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tabs-in{max-width:600px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 8px;font-size:12px;color:var(--muted)}
+.tab.on{color:var(--accent);font-weight:600}
+
+.toast{position:fixed;left:16px;right:16px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:20;max-width:520px;margin:0 auto;padding:12px 16px;border-radius:12px;background:var(--ink);color:var(--bg);font-size:14px;line-height:1.4;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+.saved{position:fixed;bottom:calc(84px + env(safe-area-inset-bottom));right:16px;padding:3px 9px;border-radius:9px;background:var(--card);border:1px solid var(--line);z-index:11;font-size:12px;color:var(--muted);opacity:0;transition:opacity .3s}
+.saved.show{opacity:1}
+</style>
+</head>
+<body>
+<header class="top" id="top"><div class="nav" id="nav"></div></header>
+<div class="saved" id="saved">Gespeichert</div>
+<main id="app"></main>
+<nav class="tabs" aria-label="Bereiche">
+  <div class="tabs-in">
+    <button class="tab" data-view="today">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/></svg>
+      Tag
+    </button>
+    <button class="tab" data-view="week">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/></svg>
+      Woche
+    </button>
+    <button class="tab" data-view="history">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4v4h4"/><path d="M12 8v4l3 2"/></svg>
+      Verlauf
+    </button>
+  </div>
+</nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+
+<script>
+(function () {
+'use strict';
+
+/* ---------- Inhalte ---------- */
+
+const MORNING = [
+  { id: 'dank',   label: 'Ich bin dankbar für\u00a0…', n: 3 },
+  { id: 'wunder', label: 'So mache ich den heutigen Tag wundervoll\u00a0…', n: 3 },
+  { id: 'affirm', label: 'Positive Selbstbekräftigung', n: 1, ph: 'Ich bin\u00a0…' }
+];
+const EVENING = [
+  { id: 'gut',    label: 'Was habe ich heute Gutes für jemanden getan?', n: 1 },
+  { id: 'besser', label: 'Was werde ich morgen besser machen?', n: 1 },
+  { id: 'toll',   label: 'Tolle Dinge, die ich heute erlebt habe', n: 3 }
+];
+
+const QUOTES = [
+  ['Nicht weil es schwer ist, wagen wir es nicht, sondern weil wir es nicht wagen, ist es schwer.', 'Seneca'],
+  ['Glück ist das Einzige, das sich verdoppelt, wenn man es teilt.', 'Albert Schweitzer'],
+  ['Es ist nicht wenig Zeit, die wir haben, sondern es ist viel Zeit, die wir nicht nutzen.', 'Seneca'],
+  ['Das Glück deines Lebens hängt von der Beschaffenheit deiner Gedanken ab.', 'Marc Aurel'],
+  ['Es ist nicht genug zu wissen, man muss auch anwenden; es ist nicht genug zu wollen, man muss auch tun.', 'Johann Wolfgang von Goethe'],
+  ['Wer kämpft, kann verlieren. Wer nicht kämpft, hat schon verloren.', 'Bertolt Brecht'],
+  ['Man muss das Unmögliche versuchen, um das Mögliche zu erreichen.', 'Hermann Hesse'],
+  ['Und jedem Anfang wohnt ein Zauber inne.', 'Hermann Hesse'],
+  ['Die beste Zeit, einen Baum zu pflanzen, war vor zwanzig Jahren. Die nächstbeste ist jetzt.', 'Chinesisches Sprichwort'],
+  ['Wer ein Warum zum Leben hat, erträgt fast jedes Wie.', 'Friedrich Nietzsche'],
+  ['Nicht die Glücklichen sind dankbar. Es sind die Dankbaren, die glücklich sind.', 'Francis Bacon'],
+  ['Das Leben ist wie Fahrradfahren. Um die Balance zu halten, musst du in Bewegung bleiben.', 'Albert Einstein'],
+  ['Ob du denkst, du kannst es, oder du kannst es nicht: Du wirst auf jeden Fall recht behalten.', 'Henry Ford'],
+  ['Die Zukunft hängt davon ab, was wir heute tun.', 'Mahatma Gandhi'],
+  ['Man sieht nur mit dem Herzen gut. Das Wesentliche ist für die Augen unsichtbar.', 'Antoine de Saint-Exupéry'],
+  ['Das Geheimnis des Vorankommens besteht darin, den ersten Schritt zu tun.', 'Mark Twain'],
+  ['Lebe, als würdest du morgen sterben. Lerne, als würdest du ewig leben.', 'Mahatma Gandhi'],
+  ['Mut steht am Anfang des Handelns, Glück am Ende.', 'Demokrit'],
+  ['Es gibt nichts Gutes, außer man tut es.', 'Erich Kästner'],
+  ['Humor ist der Knopf, der verhindert, dass uns der Kragen platzt.', 'Joachim Ringelnatz'],
+  ['Wer aufhört, besser zu werden, hat aufgehört, gut zu sein.', 'Philip Rosenthal'],
+  ['Du musst nicht großartig sein, um anzufangen, aber du musst anfangen, um großartig zu werden.', 'Zig Ziglar'],
+  ['Inspiration existiert, aber sie muss dich bei der Arbeit finden.', 'Pablo Picasso'],
+  ['Ein Lächeln ist die kürzeste Verbindung zwischen zwei Menschen.', 'Victor Borge'],
+  ['Es ist nie zu spät, das zu werden, was man hätte sein können.', 'George Eliot'],
+  ['Ich habe keine besondere Begabung, sondern bin nur leidenschaftlich neugierig.', 'Albert Einstein'],
+  ['Glücklich ist nicht, wer anderen so vorkommt, sondern wer sich selbst dafür hält.', 'Seneca'],
+  ['In der Mitte von Schwierigkeiten liegen die Möglichkeiten.', 'Albert Einstein'],
+  ['Auch aus Steinen, die einem in den Weg gelegt werden, kann man Schönes bauen.', 'Johann Wolfgang von Goethe'],
+  ['Was du heute kannst besorgen, das verschiebe nicht auf morgen.', 'Sprichwort'],
+  ['Die Freude und das Lächeln sind der Sommer des Lebens.', 'Jean Paul'],
+  ['Wer will, findet Wege. Wer nicht will, findet Gründe.', 'Sprichwort'],
+  ['Nichts auf der Welt ist so mächtig wie eine Idee, deren Zeit gekommen ist.', 'Victor Hugo'],
+  ['Gewohnheiten sind zuerst Spinnweben, dann Drahtseile.', 'Spanisches Sprichwort'],
+  ['Phantasie ist wichtiger als Wissen, denn Wissen ist begrenzt.', 'Albert Einstein'],
+  ['Freude ist die einfachste Form der Dankbarkeit.', 'Karl Barth'],
+  ['Kleine Taten, die man ausführt, sind besser als große, die man plant.', 'George C. Marshall'],
+  ['Alles Große in unserer Welt geschieht nur, weil jemand mehr tut, als er muss.', 'Hermann Gmeiner'],
+  ['Der Vergleich ist der Dieb der Freude.', 'Theodore Roosevelt'],
+  ['Die größte Entdeckung meiner Generation ist, dass ein Mensch sein Leben ändern kann, indem er seine Einstellung ändert.', 'William James'],
+  ['Erfolg ist nicht endgültig, Misserfolg ist nicht fatal. Was zählt, ist der Mut weiterzumachen.', 'Winston Churchill'],
+  ['Sei du selbst die Veränderung, die du dir wünschst für diese Welt.', 'Mahatma Gandhi'],
+  ['Tu erst das Notwendige, dann das Mögliche, und plötzlich schaffst du das Unmögliche.', 'Franz von Assisi'],
+  ['Wenn du es träumen kannst, kannst du es auch tun.', 'Walt Disney'],
+  ['Wer immer tut, was er schon kann, bleibt immer das, was er schon ist.', 'Henry Ford'],
+  ['Was wir heute tun, entscheidet darüber, wie die Welt morgen aussieht.', 'Marie von Ebner-Eschenbach'],
+  ['Ein Ziel ohne Plan ist nur ein Wunsch.', 'Antoine de Saint-Exupéry'],
+  ['Dankbarkeit ist nicht nur die größte aller Tugenden, sondern die Mutter von allen.', 'Cicero'],
+  ['Die Welt gehört dem, der sie genießt.', 'Giacomo Leopardi'],
+  ['Wer nicht genießt, wird ungenießbar.', 'Konstantin Wecker']
+];
+
+const HABIT_PH = ['z. B. Meditation', 'z. B. Sport', 'z. B. 2 Liter Wasser'];
+const WD = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+/* ---------- Hilfsfunktionen ---------- */
+
+const $ = (s, r = document) => r.querySelector(s);
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+function svg(path, size = 22) {
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('width', size); s.setAttribute('height', size);
+  s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('fill', 'none');
+  s.setAttribute('stroke', 'currentColor'); s.setAttribute('stroke-width', '1.9');
+  s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round');
+  s.innerHTML = path;
+  return s;
+}
+const ICON = {
+  left: '<path d="m15 18-6-6 6-6"/>',
+  right: '<path d="m9 18 6-6-6-6"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
+  stop: '<rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor" stroke="none"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/>',
+  moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  leaf: '<path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19 13 11"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  repeat: '<path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12"/><path d="M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/>',
+  star: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  plan: '<path d="M4 20h16"/><path d="M6 16l4-5 3 3 5-7"/>',
+  note: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>'
+};
+
+const pad = n => String(n).padStart(2, '0');
+const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseKey = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() + n); return x; };
+const mondayOf = d => addDays(d, -((d.getDay() + 6) % 7));
+const todayKey = () => keyOf(new Date());
+function isoWeek(d) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return Math.ceil(((t - y0) / 86400000 + 1) / 7);
+}
+function weekRange(mk) {
+  const a = parseKey(mk), b = addDays(a, 6);
+  const M = { month: 'long' }, Ms = { month: 'short' };
+  if (a.getMonth() === b.getMonth()) return `${a.getDate()}.–${b.getDate()}. ${b.toLocaleDateString('de-DE', M)}`;
+  return `${a.getDate()}. ${a.toLocaleDateString('de-DE', Ms)} – ${b.getDate()}. ${b.toLocaleDateString('de-DE', Ms)}`;
+}
+function quoteFor(d) {
+  const n = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+  return QUOTES[((n % QUOTES.length) + QUOTES.length) % QUOTES.length];
+}
+const filled = v => typeof v === 'string' && v.trim() !== '';
+function countDay(day, defs) {
+  let c = 0, t = 0;
+  defs.forEach(f => { for (let i = 0; i < f.n; i++) { t++; if (day && day[f.id] && filled(day[f.id][i])) c++; } });
+  return [c, t];
+}
+function hasContent(obj) {
+  if (!obj) return false;
+  return Object.keys(obj).some(k => {
+    const v = obj[k];
+    if (Array.isArray(v)) return v.some(filled);
+    if (k === 'glueck') return v != null;
+    return filled(v);
+  });
+}
+function weekHasReflection(w) {
+  if (!w) return false;
+  const copy = Object.assign({}, w); delete copy.habits;
+  return hasContent(copy);
+}
+
+/* ---------- Speicher ---------- */
+
+const STORE_KEY = 'sechs-minuten-tagebuch.v1';
+let db = load();
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (d && typeof d === 'object' && d.days && d.weeks) return d;
+  } catch (e) { /* leer starten */ }
+  return { days: {}, weeks: {} };
+}
+let saveTimer = null;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flush, 350);
+}
+function flush() {
+  clearTimeout(saveTimer); saveTimer = null;
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(db));
+    const s = $('#saved'); s.classList.add('show');
+    clearTimeout(flush.t); flush.t = setTimeout(() => s.classList.remove('show'), 1200);
+  } catch (e) {
+    toast('Speichern hat nicht geklappt. Ist der Speicher voll?');
+  }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && saveTimer) flush(); });
+window.addEventListener('pagehide', () => { if (saveTimer) flush(); });
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+function toast(msg, ms = 3800) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+/* ---------- Spracheingabe ---------- */
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, recTa = null, recBtn = null;
+
+function stopDictation() {
+  if (!rec) return;
+  const r = rec; rec = null;
+  try { r.stop(); } catch (e) { /* schon beendet */ }
+  if (recBtn) { recBtn.classList.remove('rec'); recBtn.replaceChildren(svg(ICON.mic, 20)); recBtn.setAttribute('aria-label', 'Diktieren'); }
+  recTa = null; recBtn = null;
+}
+function joinText(base, add) {
+  add = add.trim();
+  if (!add) return base;
+  if (!base.trim()) return add.charAt(0).toUpperCase() + add.slice(1);
+  return base.replace(/\s+$/, '') + ' ' + add;
+}
+function startDictation(ta, btn) {
+  if (rec) { const same = recTa === ta; stopDictation(); if (same) return; }
+  if (!SR) {
+    toast('Spracheingabe per Knopf geht in diesem Browser nicht. Tippe ins Feld und nutze das Mikrofon auf deiner Tastatur.', 5500);
+    ta.focus();
+    return;
+  }
+  let r;
+  try { r = new SR(); } catch (e) { toast('Spracheingabe ließ sich nicht starten. Nutze das Mikrofon auf deiner Tastatur.'); ta.focus(); return; }
+  r.lang = 'de-DE';
+  r.continuous = true;
+  r.interimResults = true;
+  const base = ta.value;
+  r.onresult = e => {
+    let txt = '';
+    for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
+    ta.value = joinText(base, txt);
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  r.onerror = e => {
+    const err = e.error;
+    if (err === 'not-allowed' || err === 'service-not-allowed') toast('Kein Zugriff aufs Mikrofon. Erlaube ihn in den Einstellungen oder nutze das Mikrofon auf deiner Tastatur.', 6000);
+    else if (err === 'network') toast('Die Spracherkennung braucht gerade Internet. Offline funktioniert das Mikrofon auf deiner Tastatur.', 6000);
+    else if (err === 'no-speech') toast('Ich habe nichts gehört. Tippe nochmal aufs Mikrofon.');
+    else if (err !== 'aborted') toast('Spracheingabe unterbrochen.');
+  };
+  r.onend = () => { if (rec === r) stopDictation(); };
+  try { r.start(); } catch (e) { toast('Spracheingabe ließ sich nicht starten.'); return; }
+  rec = r; recTa = ta; recBtn = btn;
+  btn.classList.add('rec');
+  btn.replaceChildren(svg(ICON.stop, 18));
+  btn.setAttribute('aria-label', 'Diktat beenden');
+}
+
+/* ---------- Bausteine ---------- */
+
+function autogrow(ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
+
+function textRow(getVal, setVal, opts = {}) {
+  const row = el('div', 'row');
+  if (opts.num) row.append(el('span', 'num', opts.num + '.'));
+  const ta = document.createElement('textarea');
+  ta.rows = 1;
+  if (opts.tall) ta.classList.add('tall');
+  ta.value = getVal() || '';
+  ta.placeholder = opts.ph || '';
+  if (opts.label) ta.setAttribute('aria-label', opts.label);
+  ta.addEventListener('input', () => { setVal(ta.value); autogrow(ta); });
+  const mic = el('button', 'mic');
+  mic.type = 'button';
+  mic.setAttribute('aria-label', 'Diktieren');
+  mic.append(svg(ICON.mic, 20));
+  mic.addEventListener('click', () => startDictation(ta, mic));
+  row.append(ta, mic);
+  requestAnimationFrame(() => autogrow(ta));
+  return row;
+}
+
+/* Feldgruppe, gespeichert als Array in obj[def.id] */
+function question(obj, def, onChange) {
+  const q = el('div', 'q');
+  q.append(el('h3', null, def.label));
+  if (def.hint) q.append(el('p', 'hint', def.hint));
+  for (let i = 0; i < def.n; i++) {
+    q.append(textRow(
+      () => (obj[def.id] || [])[i],
+      v => {
+        if (!Array.isArray(obj[def.id])) obj[def.id] = [];
+        obj[def.id][i] = v;
+        onChange();
+      },
+      { num: def.n > 1 ? i + 1 : null, ph: def.ph, tall: def.tall, label: def.label + (def.n > 1 ? ' ' + (i + 1) : '') }
+    ));
+  }
+  return q;
+}
+
+function partHead(title, icon, countEl) {
+  const h = el('div', 'part-head');
+  h.append(svg(icon, 22), el('h2', null, title));
+  if (countEl) h.append(countEl);
+  return h;
+}
+
+function setNav(title, sub, onPrev, onNext) {
+  const nav = $('#nav'); nav.replaceChildren();
+  const prev = el('button', 'icon-btn'); prev.setAttribute('aria-label', 'Zurück'); prev.append(svg(ICON.left, 24)); prev.onclick = onPrev;
+  const next = el('button', 'icon-btn'); next.setAttribute('aria-label', 'Weiter'); next.append(svg(ICON.right, 24)); next.onclick = onNext;
+  const mid = el('div', 'mid');
+  mid.append(el('h1', null, title));
+  const s = el('div', 'sub');
+  if (sub) s.append(sub);
+  mid.append(s);
+  if (!onPrev) prev.style.visibility = 'hidden';
+  if (!onNext) next.style.visibility = 'hidden';
+  nav.append(prev, mid, next);
+}
+function subWithJump(text, label, onJump) {
+  const f = document.createDocumentFragment();
+  if (text) f.append(text);
+  if (label) {
+    if (text) f.append(' · ');
+    const b = el('button', null, label); b.onclick = onJump; f.append(b);
+  }
+  return f;
+}
+
+/* ---------- Gewohnheiten ---------- */
+
+function weekHabits(mk) {
+  const w = db.weeks[mk];
+  if (w && Array.isArray(w.habits)) return w.habits;
+  // Namen aus der letzten Woche mit Gewohnheiten übernehmen
+  const prev = Object.keys(db.weeks).filter(k => k < mk && Array.isArray(db.weeks[k].habits)).sort().pop();
+  const names = prev ? db.weeks[prev].habits.map(h => h.name || '') : ['', '', ''];
+  return names.map(name => ({ name, done: [false, false, false, false, false, false, false] }));
+}
+function commitHabits(mk, habits) {
+  db.weeks[mk] = db.weeks[mk] || {};
+  db.weeks[mk].habits = habits;
+  save();
+}
+
+/* ---------- Ansicht: Tag ---------- */
+
+let view = 'today';
+let curDay = todayKey();
+let curWeek = keyOf(mondayOf(new Date()));
+
+function renderDay(scrollEvening) {
+  const app = $('#app');
+  const d = parseKey(curDay);
+  const tk = todayKey();
+  const isToday = curDay === tk;
+  const day = db.days[curDay] || {};
+  const changed = () => { db.days[curDay] = day; save(); updateCounts(); };
+
+  let rel = '';
+  if (isToday) rel = 'Heute';
+  else if (curDay === keyOf(addDays(new Date(), -1))) rel = 'Gestern';
+  else if (curDay === keyOf(addDays(new Date(), 1))) rel = 'Morgen';
+  else rel = String(d.getFullYear());
+  setNav(
+    d.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }),
+    subWithJump(rel, isToday ? null : 'Zu heute', () => { curDay = tk; render(); }),
+    () => { curDay = keyOf(addDays(d, -1)); render(); },
+    () => { curDay = keyOf(addDays(d, 1)); render(); }
+  );
+
+  const [qt, qa] = quoteFor(d);
+  const quote = el('figure', 'quote');
+  quote.style.margin = '10px 0 18px';
+  const p = el('p', null, '„' + qt + '“');
+  const cite = el('cite', null, qa);
+  quote.append(p, cite);
+  app.append(quote);
+
+  if (d.getDay() === 0) {
+    const b = el('button', 'banner');
+    const span = el('span');
+    span.innerHTML = '<b>Sonntag:</b> Zeit für deine Wochenreflexion und die Planung der nächsten Woche.';
+    b.append(svg(ICON.leaf, 22), span, svg(ICON.arrow, 20));
+    b.querySelector('svg').style.color = 'var(--accent)';
+    b.onclick = () => { curWeek = keyOf(mondayOf(d)); view = 'week'; render(); };
+    app.append(b);
+  }
+
+  const mCount = el('span', 'count'), eCount = el('span', 'count');
+  function updateCounts() {
+    const [mc, mt] = countDay(day, MORNING), [ec, et] = countDay(day, EVENING);
+    mCount.textContent = `${mc}/${mt}`; mCount.classList.toggle('full', mc === mt);
+    eCount.textContent = `${ec}/${et}`; eCount.classList.toggle('full', ec === et);
+  }
+
+  const morning = el('section', 'part');
+  morning.append(partHead('Morgens', ICON.sun, mCount));
+  MORNING.forEach(def => morning.append(question(day, def, changed)));
+
+  const evening = el('section', 'part');
+  evening.id = 'abend';
+  evening.append(partHead('Abends', ICON.moon, eCount));
+  EVENING.forEach(def => evening.append(question(day, def, changed)));
+
+  app.append(morning, evening);
+  updateCounts();
+
+  // Gewohnheiten des Tages zum schnellen Abhaken
+  const mk = keyOf(mondayOf(d));
+  const habits = weekHabits(mk);
+  const idx = (d.getDay() + 6) % 7;
+  const named = habits.map((h, i) => [h, i]).filter(([h]) => filled(h.name));
+  const hp = el('section', 'part');
+  hp.append(partHead('Gewohnheiten heute', ICON.repeat));
+  if (named.length) {
+    named.forEach(([h]) => {
+      const b = el('button', 'quick');
+      const c = el('span', 'check' + (h.done[idx] ? ' on' : ''));
+      c.style.flex = 'none';
+      c.append(svg(ICON.check, 20));
+      b.append(c, el('span', null, h.name));
+      b.onclick = () => { h.done[idx] = !h.done[idx]; c.classList.toggle('on', h.done[idx]); commitHabits(mk, habits); };
+      hp.append(b);
+    });
+  } else {
+    hp.append(el('p', 'part-note', 'Lege im Bereich „Woche“ bis zu drei Gewohnheiten fest, dann kannst du sie hier jeden Tag abhaken.'));
+    const go = el('button', 'btn'); go.textContent = 'Gewohnheiten festlegen'; go.style.margin = '4px 0 12px';
+    go.onclick = () => { curWeek = mk; view = 'week'; render(); };
+    hp.append(go);
+  }
+  app.append(hp);
+
+  if (scrollEvening) requestAnimationFrame(() => {
+    const y = evening.getBoundingClientRect().top + window.scrollY - 80;
+    window.scrollTo({ top: y });
+  });
+}
+
+/* ---------- Ansicht: Woche ---------- */
+
+function renderWeek() {
+  const app = $('#app');
+  const mk = curWeek;
+  const a = parseKey(mk);
+  const thisMonday = keyOf(mondayOf(new Date()));
+  const w = db.weeks[mk] || {};
+  const changed = () => { db.weeks[mk] = w; save(); };
+
+  let rel = weekRange(mk);
+  if (mk === thisMonday) rel = 'Diese Woche · ' + rel;
+  setNav(
+    'Woche ' + isoWeek(a),
+    subWithJump(rel, mk === thisMonday ? null : 'Zu dieser Woche', () => { curWeek = thisMonday; render(); }),
+    () => { curWeek = keyOf(addDays(a, -7)); render(); },
+    () => { curWeek = keyOf(addDays(a, 7)); render(); }
+  );
+
+  // Plan aus der Vorwoche anzeigen
+  const pw = db.weeks[keyOf(addDays(a, -7))];
+  if (pw && (filled(pw.privat) || filled(pw.social) || (pw.freude || []).some(filled))) {
+    const card = el('section', 'plan');
+    card.append(el('h2', null, 'Dein Plan für diese Woche'));
+    const dl = el('dl');
+    const add = (t, v) => { if (filled(v)) { dl.append(el('dt', null, t), el('dd', null, v.trim())); } };
+    add('Privatleben', pw.privat);
+    add('Social-Media-Karriere', pw.social);
+    const fr = (pw.freude || []).filter(filled).map(s => '• ' + s.trim()).join('\n');
+    add('Darauf freue ich mich', fr);
+    card.append(dl);
+    app.append(card);
+  }
+
+  // Gewohnheitstracker
+  const habits = weekHabits(mk);
+  const hp = el('section', 'part');
+  hp.append(partHead('Gewohnheitstracker', ICON.repeat));
+  hp.append(el('p', 'part-note', 'Drei Gewohnheiten für diese Woche. Tippe auf einen Tag, wenn du sie eingehalten hast.'));
+  const tIdx = mk === thisMonday ? (new Date().getDay() + 6) % 7 : -1;
+  habits.forEach((h, hi) => {
+    const box = el('div', 'habit');
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.value = h.name || ''; inp.placeholder = HABIT_PH[hi] || 'Gewohnheit';
+    inp.setAttribute('aria-label', 'Gewohnheit ' + (hi + 1));
+    inp.enterKeyHint = 'done';
+    inp.addEventListener('input', () => { h.name = inp.value; commitHabits(mk, habits); });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+    const days = el('div', 'days');
+    WD.forEach((lbl, di) => {
+      const col = el('div', 'day' + (di === tIdx ? ' today' : ''));
+      const c = el('button', 'check' + (h.done[di] ? ' on' : ''));
+      c.setAttribute('aria-label', lbl + ' abhaken');
+      c.setAttribute('aria-pressed', h.done[di] ? 'true' : 'false');
+      c.append(svg(ICON.check, 20));
+      c.onclick = () => {
+        h.done[di] = !h.done[di];
+        c.classList.toggle('on', h.done[di]);
+        c.setAttribute('aria-pressed', h.done[di] ? 'true' : 'false');
+        commitHabits(mk, habits);
+      };
+      col.append(c, el('span', null, lbl));
+      days.append(col);
+    });
+    box.append(inp, days);
+    hp.append(box);
+  });
+  app.append(hp);
+
+  // Wochenreflexion
+  const refl = el('section', 'part');
+  refl.append(partHead('Wochenreflexion', ICON.star));
+  refl.append(el('p', 'part-note', 'Am besten am Sonntag ausfüllen.'));
+  refl.append(question(w, { id: 'erfolge', label: 'Meine Erfolge der Woche', n: 1, ph: 'Was ist mir gelungen?' }, changed));
+
+  const gq = el('div', 'q');
+  gq.append(el('h3', null, 'Wie glücklich war ich diese Woche und warum?'));
+  const scale = el('div', 'scale');
+  for (let i = 1; i <= 10; i++) {
+    const b = el('button', w.glueck === i ? 'on' : null, String(i));
+    b.setAttribute('aria-label', 'Glück ' + i + ' von 10');
+    b.onclick = () => {
+      w.glueck = w.glueck === i ? null : i;
+      scale.querySelectorAll('button').forEach((x, xi) => x.classList.toggle('on', w.glueck === xi + 1));
+      changed();
+    };
+    scale.append(b);
+  }
+  const legend = el('div', 'scale-legend'); legend.append(el('span', null, 'gar nicht'), el('span', null, 'sehr glücklich'));
+  gq.append(scale, legend);
+  gq.append(textRow(() => (w.glueckWarum || [])[0], v => { w.glueckWarum = [v]; changed(); }, { ph: 'Warum?', label: 'Warum' }));
+  refl.append(gq);
+  refl.append(question(w, { id: 'gelernt', label: 'Was habe ich diese Woche gelernt?', n: 1 }, changed));
+  app.append(refl);
+
+  // Wochenplanung (für die kommende Woche)
+  const plan = el('section', 'part');
+  plan.append(partHead('Wochenplanung', ICON.plan));
+  plan.append(el('p', 'part-note', 'Für die Woche ab ' + parseKey(keyOf(addDays(a, 7))).toLocaleDateString('de-DE', { day: 'numeric', month: 'long' }) + '.'));
+  const pq = el('div', 'q');
+  pq.append(el('h3', null, 'So sorge ich für eine wunderbare Woche'));
+  const lab1 = el('p', 'hint', 'Privatleben'); lab1.style.marginTop = '8px';
+  pq.append(lab1, textRow(() => w.privat, v => { w.privat = v; changed(); }, { label: 'Privatleben' }));
+  const lab2 = el('p', 'hint', 'Erfolg in meiner Social-Media-Karriere'); lab2.style.marginTop = '14px';
+  pq.append(lab2, textRow(() => w.social, v => { w.social = v; changed(); }, { label: 'Social-Media-Karriere' }));
+  plan.append(pq);
+  plan.append(question(w, { id: 'freude', label: 'Darauf freue ich mich', n: 3 }, changed));
+  app.append(plan);
+
+  // Notizen
+  const notes = el('section', 'part');
+  notes.append(partHead('Notizen & Ideen', ICON.note));
+  notes.append(el('p', 'part-note', 'Für die kommende Woche.'));
+  const nq = el('div', 'q'); nq.style.borderTop = '0';
+  nq.append(textRow(() => w.notizen, v => { w.notizen = v; changed(); }, { tall: true, ph: 'Gedanken, Ideen, Content-Ideen\u00a0…', label: 'Notizen und Ideen' }));
+  notes.append(nq);
+  app.append(notes);
+}
+
+/* ---------- Ansicht: Verlauf ---------- */
+
+function snippet(day) {
+  for (const def of MORNING.concat(EVENING)) {
+    const v = (day[def.id] || []).find(filled);
+    if (v) return v.trim();
+  }
+  return '';
+}
+function streak() {
+  let d = new Date();
+  if (!hasContent(db.days[keyOf(d)])) d = addDays(d, -1);
+  let n = 0;
+  while (hasContent(db.days[keyOf(d)])) { n++; d = addDays(d, -1); }
+  return n;
+}
+
+function renderHistory() {
+  const app = $('#app');
+  setNav('Verlauf', null, null, null);
+
+  const dayKeys = Object.keys(db.days).filter(k => hasContent(db.days[k])).sort().reverse();
+  const stats = el('div', 'stats');
+  const s1 = el('div', 'stat'); s1.append(el('b', null, String(dayKeys.length)), el('span', null, dayKeys.length === 1 ? 'Tag ausgefüllt' : 'Tage ausgefüllt'));
+  const st = streak();
+  const s2 = el('div', 'stat'); s2.append(el('b', null, String(st)), el('span', null, st === 1 ? 'Tag in Folge' : 'Tage in Folge'));
+  stats.append(s1, s2);
+  app.append(stats);
+
+  const weekSet = new Set(dayKeys.map(k => keyOf(mondayOf(parseKey(k)))));
+  Object.keys(db.weeks).forEach(k => { if (hasContent(db.weeks[k]) || (db.weeks[k].habits || []).some(h => h.done.some(Boolean))) weekSet.add(k); });
+  const weeks = Array.from(weekSet).sort().reverse();
+
+  if (!weeks.length) {
+    app.append(el('p', 'empty', 'Hier erscheinen deine Einträge, sobald du den ersten Tag ausgefüllt hast.'));
+  }
+  weeks.forEach(mk => {
+    const box = el('section', 'hweek');
+    const head = el('button', 'hweek-head');
+    const left = el('strong', null, 'Woche ' + isoWeek(parseKey(mk)) + ' · ' + weekRange(mk));
+    head.append(left);
+    if (weekHasReflection(db.weeks[mk])) head.append(el('span', 'tag', 'Reflexion ✓'));
+    head.onclick = () => { curWeek = mk; view = 'week'; render(); };
+    box.append(head);
+    dayKeys.filter(k => keyOf(mondayOf(parseKey(k))) === mk).forEach(k => {
+      const d = parseKey(k);
+      const row = el('button', 'hday');
+      row.append(
+        el('span', 'd', WD[(d.getDay() + 6) % 7] + ' ' + d.getDate() + '.' + (d.getMonth() + 1) + '.'),
+        el('span', 't', snippet(db.days[k]) || '…')
+      );
+      row.onclick = () => { curDay = k; view = 'today'; render(); };
+      box.append(row);
+    });
+    app.append(box);
+  });
+
+  const bk = el('section', 'part');
+  bk.style.marginTop = '8px';
+  bk.append(partHead('Datensicherung', ICON.note));
+  bk.append(el('p', 'small', 'Deine Einträge liegen nur auf diesem Gerät, nicht in einer Cloud. Speichere ab und zu ein Backup, zum Beispiel in iCloud Drive oder als Mail an dich selbst.'));
+  const row = el('div', 'btn-row');
+  const ex = el('button', 'btn primary', 'Backup speichern'); ex.onclick = exportData;
+  const im = el('button', 'btn', 'Backup laden'); im.onclick = () => $('#importFile').click();
+  row.append(ex, im);
+  bk.append(row);
+  bk.append(el('p', 'small', 'Spracheingabe: Tippe auf das Mikrofon neben einem Feld und sprich. Ohne Internet nimm das Mikrofon auf deiner Handytastatur.'));
+  app.append(bk);
+}
+
+async function exportData() {
+  flush();
+  const json = JSON.stringify(db, null, 1);
+  const name = 'tagebuch-backup-' + todayKey() + '.json';
+  const file = new File([json], name, { type: 'application/json' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: 'Tagebuch-Backup' }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(file); a.download = name;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  toast('Backup gespeichert.');
+}
+
+$('#importFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    if (!data || typeof data.days !== 'object' || typeof data.weeks !== 'object') throw new Error('format');
+    const nd = Object.keys(data.days).length, nw = Object.keys(data.weeks).length;
+    if (!confirm(`Backup mit ${nd} Tagen und ${nw} Wochen laden? Gleiche Tage werden durch das Backup ersetzt, alles andere bleibt.`)) return;
+    Object.assign(db.days, data.days);
+    Object.assign(db.weeks, data.weeks);
+    flush();
+    render();
+    toast('Backup geladen.');
+  } catch (err) {
+    toast('Diese Datei ist kein gültiges Tagebuch-Backup.');
+  }
+});
+
+/* ---------- Steuerung ---------- */
+
+function render(opts = {}) {
+  stopDictation();
+  $('#app').replaceChildren();
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.view === view));
+  window.scrollTo(0, 0);
+  if (view === 'today') renderDay(opts.scrollEvening);
+  else if (view === 'week') renderWeek();
+  else renderHistory();
+}
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  if (view === t.dataset.view) {
+    if (view === 'today') curDay = todayKey();
+    if (view === 'week') curWeek = keyOf(mondayOf(new Date()));
+  }
+  view = t.dataset.view;
+  render();
+}));
+
+window.addEventListener('scroll', () => $('#top').classList.toggle('scrolled', window.scrollY > 4), { passive: true });
+
+// Nach Mitternacht oder nach langer Pause wieder beim heutigen Tag landen
+let lastSeen = todayKey();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  const tk = todayKey();
+  if (tk !== lastSeen) {
+    if (view === 'today' && curDay === lastSeen) { curDay = tk; render(); }
+    lastSeen = tk;
+  }
+});
+
+render({ scrollEvening: new Date().getHours() >= 17 });
+
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+})();
+</script>
+</body>
+</html>
